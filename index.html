@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Route Sharing App</title>
+    <script src="./script.js" text="text/javascript"></script>
+  </head>
+  <body>
+    <h1>Share Your Route</h1>
+    <form id="route-form">
+      <label for="destination">Enter destination:</label>
+      <input
+        type="text"
+        id="destination"
+        placeholder="Enter a place or address"
+      />
+      <button type="button" id="get-route-btn">Get Route</button>
+    </form>
+    <div id="map"></div>
+    <div id="routeLink"></div>
+
+    <script>
+      let map;
+      let directionsService;
+      let directionsRenderer;
+      let userLocation;
+      let marker;
+
+      function initMap() {
+        navigator.geolocation.getCurrentPosition((position) => {
+          userLocation = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          };
+
+          map = new google.maps.Map(document.getElementById("map"), {
+            center: userLocation,
+            zoom: 14,
+          });
+
+          marker = new google.maps.Marker({
+            position: userLocation,
+            map: map,
+          });
+
+          directionsService = new google.maps.DirectionsService();
+          directionsRenderer = new google.maps.DirectionsRenderer();
+          directionsRenderer.setMap(map);
+        });
+      }
+
+      document
+        .getElementById("get-route-btn")
+        .addEventListener("click", function () {
+          const destination = document.getElementById("destination").value;
+          if (destination) {
+            getDirections(userLocation, destination);
+          } else {
+            alert("Please enter a destination.");
+          }
+        });
+
+      function getDirections(origin, destination) {
+        const request = {
+          origin: origin,
+          destination: destination,
+          travelMode: "DRIVING",
+        };
+
+        directionsService.route(request, function (result, status) {
+          if (status === "OK") {
+            directionsRenderer.setDirections(result);
+            generateShareLink(origin, destination);
+          } else {
+            alert("Directions request failed due to " + status);
+          }
+        });
+      }
+
+      function generateShareLink(origin, destination) {
+        const originStr = `${origin.lat},${origin.lng}`;
+        const destinationStr = encodeURIComponent(destination);
+        const link = `https://www.google.com/maps/dir/?api=1&origin=${originStr}&destination=${destinationStr}`;
+        document.getElementById("routeLink").innerHTML = `
+                <p>Share your route with an emergency contact:</p>
+                <a href="${link}" target="_blank">${link}</a>
+            `;
+      }
+
+      window.onload = initMap;
+    </script>
+  </body>
+</html>
